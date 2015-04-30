@@ -203,13 +203,19 @@ function openPage() {
             base64Data = base64Data.replace(/^data:image\/(png|jpeg);base64,/, "");
             var uuid = guid();
             var xhr = new XMLHttpRequest();
-            xhr.open('POST', 'http://localhost:8080/bugraker/api/images/');
+            xhr.open('POST', 'http://localhost:8080/bugraker/api/screenshots/');
             xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8"); 
             xhr.send(JSON.stringify({uuid : uuid, base64Data : base64Data}));
             chrome.tabs.query({'active': true, 'windowId': chrome.windows.WINDOW_ID_CURRENT},
                 function(tabs){
-                    var functionName = tabs[0].url.split("/")[4];
-                    window.open('http://localhost:8080/bugraker/issues/new?uuid=' + uuid + "&functionName=" + functionName);
+                    var functionName;
+                    var strArray = tabs[0].url.split("/");
+                    if (strArray.length >= 5) {
+                        functionName = strArray[4];
+                        window.open('http://localhost:8080/bugraker/issues/new?uuid=' + uuid + "&functionName=" + functionName);
+                    } else {
+                        window.open('http://localhost:8080/bugraker/issues/new?uuid=' + uuid);
+                    }
                 }
             );
         }
