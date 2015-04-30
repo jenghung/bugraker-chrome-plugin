@@ -184,9 +184,36 @@ function openPage() {
     }
     name = 'screencapture' + name + '-' + Date.now() + '.png';
 
+    function guid() {
+        function s4() {
+            return Math.floor((1 + Math.random()) * 0x10000)
+            .toString(16)
+            .substring(1);
+
+        }
+        return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+            s4() + '-' + s4() + s4() + s4();
+    }
+
     function onwriteend() {
+        var reader = new window.FileReader();
+        reader.readAsDataURL(blob);
+        reader.onloadend = function() {
+            base64Data = reader.result;
+            base64Data = base64Data.replace(/^data:image\/(png|jpeg);base64,/, "");
+            var uuid = guid();
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', 'http://localhost:8080/bugraker/api/images/');
+            xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8"); 
+            xhr.send(JSON.stringify({uuid : uuid, base64Data : base64Data}));
+            chrome.tabs.query({'active': true, 'windowId': chrome.windows.WINDOW_ID_CURRENT},
+                function(tabs){
+                    var functionName = tabs[0].url.split("/")[4];
+                    window.open('http://localhost:8080/bugraker/issues/new?uuid=' + uuid + "&functionName=" + functionName);
+                }
+            );
+        }
         // open the file that now contains the blob
-        window.open('filesystem:chrome-extension://' + chrome.i18n.getMessage('@@extension_id') + '/temporary/' + name);
     }
 
     function errorHandler() {
