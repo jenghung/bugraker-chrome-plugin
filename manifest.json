@@ -1,8 +1,8 @@
 {
-  "name": "Full Page Screen Capture",
+  "name": "問題回報小幫手",
   "version": "0.0.13",
   "manifest_version": 2,
-  "description": "Screen capture your current page in entirety and reliably!",
+  "description": "利用畫面截圖，快速回報問題至議題管理系統",
   "browser_action": {
     "default_icon": "icon.png",
     "default_popup": "popup.html"
