@@ -5,6 +5,8 @@
 // console object for debugging
 //
 
+var bugrakerUrl = '';
+
 var log = (function() {
     var parElt = document.getElementById('wrap'),
         logElt = document.createElement('div');
@@ -107,7 +109,6 @@ function capturePage(data, sender, callback) {
         data.totalHeight = data.totalHeight / scale;
     }
 
-
     if (!screenshot.canvas) {
         canvas = document.createElement('canvas');
         canvas.width = data.totalWidth;
@@ -199,11 +200,11 @@ function openPage() {
         var reader = new window.FileReader();
         reader.readAsDataURL(blob);
         reader.onloadend = function() {
-            base64Data = reader.result;
+            var base64Data = reader.result;
             base64Data = base64Data.replace(/^data:image\/(png|jpeg);base64,/, "");
             var uuid = guid();
             var xhr = new XMLHttpRequest();
-            xhr.open('POST', 'http://localhost:8080/bugraker/api/screenshots/');
+            xhr.open('POST', bugrakerUrl + '/api/screenshots/');
             xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8"); 
             xhr.send(JSON.stringify({uuid : uuid, base64Data : base64Data}));
             chrome.tabs.query({'active': true, 'windowId': chrome.windows.WINDOW_ID_CURRENT},
@@ -212,9 +213,9 @@ function openPage() {
                     var strArray = tabs[0].url.split("/");
                     if (strArray.length >= 5) {
                         functionName = strArray[4];
-                        window.open('http://localhost:8080/bugraker/issues/new?uuid=' + uuid + "&functionName=" + functionName);
+                        window.open(bugrakerUrl + '/issues/new?uuid=' + uuid + "&functionName=" + functionName);
                     } else {
-                        window.open('http://localhost:8080/bugraker/issues/new?uuid=' + uuid);
+                        window.open(bugrakerUrl + '/issues/new?uuid=' + uuid);
                     }
                 }
             );
@@ -243,21 +244,33 @@ function openPage() {
 
 chrome.tabs.getSelected(null, function(tab) {
 
-    if (testURLMatches(tab.url)) {
-        var loaded = false;
+    chrome.storage.sync.get({
+        bugrakerUrl: ''
+    }, function(items) {
+        if (!items.bugrakerUrl) {
+            alert("請先至擴充功能選項中設定議題管理系統網址!");
+            return;
+        } else {
+            bugrakerUrl = items.bugrakerUrl;
 
-        chrome.tabs.executeScript(tab.id, {file: 'page.js'}, function() {
-            loaded = true;
-            show('loading');
-            sendScrollMessage(tab);
-        });
+            if (testURLMatches(tab.url)) {
+                var loaded = false;
 
-        window.setTimeout(function() {
-            if (!loaded) {
-                show('uh-oh');
+                chrome.tabs.executeScript(tab.id, {file: 'page.js'}, function() {
+                    loaded = true;
+                    show('loading');
+                    sendScrollMessage(tab);
+                });
+
+                window.setTimeout(function() {
+                    if (!loaded) {
+                        show('uh-oh');
+                    }
+                }, 1000);
+            } else {
+                show('invalid');
             }
-        }, 1000);
-    } else {
-        show('invalid');
-    }
+        }
+    });
+
 });
